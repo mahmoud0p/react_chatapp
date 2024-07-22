@@ -1,0 +1,87 @@
+
+generator client {
+  provider = "prisma-client-js"
+  previewFeatures = ["postgresqlExtensions" ,"fullTextSearch", "fullTextIndex"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  extensions = [pgcrypto]
+}
+enum Role {
+  User
+  Admin
+}
+enum message_status {
+  Delivered 
+  Seen
+}
+
+model users {
+  id          String    @id @default(uuid()) @db.Uuid
+  email       String    @db.VarChar(255)
+  username    String    
+  first_name  String    @db.VarChar(255)
+  last_name   String    @db.VarChar(255)
+  password    String
+  verified    Boolean   @default(false)
+  email_token String?   
+  forget_token String?  
+  created_at  DateTime  @default(now()) 
+  updated_at  DateTime  @updatedAt
+  banned      Boolean   @default(false)
+  role        Role      @default(User)
+  sent_messages    messages[] @relation("SentMessages")  
+  chat_rooms usersOnChats[] 
+  blocks blocks[] @relation("user")
+  blockedUsers blocks[] @relation("blocked_user") 
+  requests_sent friend_requests[] @relation("requests_sent")
+  requests_received friend_requests[] @relation("requests_received")
+  image user_image?
+}
+
+model usersOnChats {
+    user_id String @db.Uuid
+    chat_id String @db.Uuid
+    users users @relation(fields: [user_id] , references: [id])
+    chats chat_rooms @relation(fields: [chat_id] , references: [id])
+    @@id([user_id , chat_id])
+}
+model messages {
+  id        String   @id @default(uuid()) @db.Uuid
+  sender_id String   @db.Uuid
+  sender    users    @relation("SentMessages", fields: [sender_id], references: [id])
+  content   String
+  created_at DateTime @default(now())
+  chat_room_id String   @db.Uuid
+  chatroom chat_rooms @relation(fields: [chat_room_id] , references: [id])
+  status message_status @default(Delivered)
+}
+model chat_rooms {
+  id        String   @id @default(uuid()) @db.Uuid
+  blocked Boolean @default(false)
+  users usersOnChats[]
+  messages messages[]
+}
+model blocks {
+    id        String   @id @default(uuid()) @db.Uuid
+    user_id    String  @db.Uuid
+    user       users   @relation("user" ,fields: [user_id], references: [id]) 
+    blocked_id String @db.Uuid
+    blockedUsers users @relation("blocked_user" , fields: [blocked_id] ,references: [id])
+
+}
+model friend_requests {
+    id        String   @id @default(uuid()) @db.Uuid
+    from String @db.Uuid
+    to String @db.Uuid
+    from_user users @relation("requests_sent" , fields: [from] , references: [id])
+    To_user users @relation("requests_received" , fields: [to] , references: [id])
+}
+model user_image {
+  id        String   @id @default(uuid()) @db.Uuid
+  url       String 
+  user_id   String @db.Uuid @unique
+  user users @relation(fields: [user_id] , references: [id])
+}
