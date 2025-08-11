@@ -1,4 +1,3 @@
-```mdx
 # 💬 React ChatApp — Real-Time Messaging
 
 A **real-time chat application** built with **React**, **PostgreSQL**, and **Prisma**. This project demonstrates fast, reliable real-time messaging with a clean UI and a type-safe backend. Use it as a learning project, demo, or foundation for a production-ready chat platform.
